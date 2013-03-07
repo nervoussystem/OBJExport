@@ -1,0 +1,4 @@
+OBJExport.java:101: v is already defined in writeVertices()
+      PVector v = pts[i];
+              ^
+1 error
