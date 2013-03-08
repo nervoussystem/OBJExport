@@ -11,8 +11,7 @@ void draw() {
   background(0);
   
   if (record) {
-    println("being record");
-    beginRecord("nervoussystem.obj.OBJExport", "filename2.obj");
+    beginRecord("nervoussystem.obj.OBJExport", "filename3.obj");
   }
   
   fill(255);
@@ -23,7 +22,6 @@ void draw() {
   if (record) {
     endRecord();
     record = false;
-    println("end record");
   }
 }
 

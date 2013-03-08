@@ -1,0 +1,98 @@
+<html>
+<head>
+<title>Nervous System | Tools | OBJExport</title>
+<meta name="keywords" content="Nervous System, 3d printed jewelry, jewelry, 3dprint, 3dprinting, 3d printing, nervoussystem, Design, Generative, Generative Jewelry, Computational Design, Computation, Generative Design, Modern Jewelry, Plastic Jewelry, Rubber Jewelry, Steel Jewelry, Green Jewelry, Jessica Rosenkrantz, Jesse Louis-Rosenberg, biomimicry, bio design" />
+<meta name="description" content="Nervous System is a design studio that works at the intersection of science, art, and technology. We create using a novel process that employs computer simulation to generate designs and digital fabrication to realize products. Drawing inspiration from natural phenomena, we write computer programs mimicking processes and patterns found in nature and use those programs to create unique and affordable art, jewelry, and housewares.">
+<meta name="author" content="Nervous System, inc.">
+<meta name="copyright" content="This website and all of its content are the property of Nervous System unless otherwise specified. Licensed under the Creative Commons Non-commercial Share-Alike 3.0 license.">
+<meta name="resource-type" content="document">
+<meta name="robots" content="ALL">
+<meta name="distribution" content="Global">
+<meta name="rating" content="General">
+<meta name="language" content="English">
+<meta name="doc-type" content="Web Page">
+<meta name="doc-class" content="Published">
+<link href='http://fonts.googleapis.com/css?family=Electrolize' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" type="text/css" href="style.css">
+  </head>
+
+
+<body>
+	<div class="centeredDiv">
+	<div id="content" class="content">
+	  <div class="header">
+		  <div class="banner"><a href="/index.php"><img src="nervouslogo.jpg"></a></div>
+		
+
+      		
+<style type="text/css">
+  div.lib { color: black; background: white;font-size:10pt;width:400px; padding-bottom:10px;float:left;}
+  span.title {font-size:10pt;font-weight:bold;}
+  a.d {text-decoration:underline;}
+  a.d:hover {text-decoration:none;}
+  .main {font-size:14pt;}
+
+  pre {font-family:monospace;}
+  div {padding-bottom:10px;}
+</style>
+
+<div class="bod">
+	<div style="float:left;width:400px;background:white;padding:5px;">
+			<div class="lib"><span class="main">OBJExport</span> <br>latest v0.1.2 03/07/2013</div>
+			<div class="lib">
+				
+				<div><span class="title">Website</span><br>
+				<a href="https://github.com/nervoussystem/OBJExport">https://github.com/nervoussystem/OBJExport</a>
+				</div>
+				
+				<div><span class="title">Description</span><br>This is a simple library to export surfaces from processing as OBJ files.  It is used the same way the PDF library is used.
+				
+				<p>
+				It works with <strong>beginRecord()</strong>, <strong>beginRaw()</strong>, and <strong>createGraphics()</strong>. The OBJ format and the exporter work with arbitrarily sided polygon, not just triangles. This allows for the versatility to export quad or hex based meshes not just triangles. If you require triangle but are drawing with polygons instead, you can use <strong>beginRaw()</strong> to get the tesselated output of Processing rather than the original polygons. This library only supports basic mesh output, and it does not currently support advanced features such as colors, normals, textures, or materials. If that's something you're interested in, let me know or contribute!
+				</p>
+				<p>
+				Tested on Windows 7, Processing 2.0b8
+				</p>
+				</div>
+			</div>
+			<div class="lib"><span class="title">Installation</span><br>
+				To install simply download the zip file, and extract the contents to your Processing libraries folder.
+			</div>
+<div class="lib"><span class="title">Example</span>
+		<pre>	
+import nervoussystem.obj.*;
+boolean record;
+
+void setup() {
+  size(400, 400,P3D);
+}
+
+void draw() {
+  if (record) {
+    beginRecord("nervoussystem.obj.OBJExport", "filename.obj"); 
+  }  
+  box(100,100,100);
+  if (record) {
+    endRecord();
+    record = false;
+  }
+}
+
+void mousePressed() {
+  record = true;
+}
+</pre>
+	</div>
+	
+<div>
+<span class="title">Contact</span>
+<div>
+jesse@n-e-r-v-o-u-s.com
+</div>
+</div>	
+	</div>
+		
+	</div><!--end bod-->	
+</div><!-- end content -->
+</body>
+</html>

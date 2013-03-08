@@ -576,4 +576,12 @@ public class OBJExport extends PGraphics {
   }
   
   //end Matrix stuff from PGraphisOpenGL
+  
+  public boolean is3D() {
+	return true;
+  }
+  
+  public boolean is2D() {
+	return false;
+  }
 }
