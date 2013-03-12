@@ -11,7 +11,7 @@ void draw() {
   background(0);
   
   if (record) {
-    beginRecord("nervoussystem.obj.OBJExport", "filename3.obj");
+    beginRecord("nervoussystem.obj.OBJExport", "filename.obj");
   }
   
   fill(255);

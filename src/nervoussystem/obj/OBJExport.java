@@ -27,10 +27,12 @@ import processing.opengl.*;
 
 public class OBJExport extends PGraphics {
   File file;
+  String filenameSimple;
   PrintWriter writer;
   float[][] pts;
   int[][] lines;
   int[][] faces;
+  int[] colors;
   int lineCount;
   int faceCount;
   int objectMode = 0;
@@ -41,10 +43,20 @@ public class OBJExport extends PGraphics {
   int VERTEX_FIELD_COUNT = 3;
   float vertices[][];
   
+  int numTriangles = 0;
+  int numQuads = 0;
+  static protected int TRIANGLE_RES = 10;
+  static protected int RECT_RES = TRIANGLE_RES+4;
+  
+  boolean drawBegan = false;
   //make transform function work
   protected int stackDepth;
   protected float[][] matrixStack = new float[MATRIX_STACK_DEPTH][16];
   PMatrix3D transformMatrix;
+  
+  //color
+  private boolean colorFlag = false;
+  PGraphics texture;
   
   public OBJExport() {
     vertices = new float[DEFAULT_VERTICES][VERTEX_FIELD_COUNT];
@@ -62,6 +74,11 @@ public class OBJExport extends PGraphics {
       throw new RuntimeException("OBJExport requires an absolute path " +
         "for the location of the output file.");
     }
+	filenameSimple = file.getName();
+	int dotPos = filenameSimple.lastIndexOf(".");
+	if(dotPos > -1) {
+		filenameSimple = filenameSimple.substring(0,dotPos);
+	}
   }
 
   protected void allocate() {
@@ -87,21 +104,28 @@ public class OBJExport extends PGraphics {
       catch (IOException e) {
         throw new RuntimeException(e);
       }
-      pts = new float[4096][3];
+      pts = new float[4096][VERTEX_FIELD_COUNT];
       lines = new int[4096][];
       faces = new int[4096][];
-      lineCount = 0;
-      faceCount = 0;
-	  vertexCount = 0;
       ptMap = new HashMap<String,Integer>();
     }
+	if(colorFlag && colors == null) colors = new int[4096];
+    lineCount = 0;
+    faceCount = 0;
+    vertexCount = 0;
+    numTriangles = 0;
+    numQuads = 0;
   }
 
   public void endDraw() {
     //write vertices and initialize ptMap
+	if(colorFlag) {
+		colorExport();
+	}
     writeVertices();
     writeLines();
     writeFaces();
+	drawBegan = false;
   }
   
   private void writeVertices() {
@@ -126,14 +150,79 @@ public class OBJExport extends PGraphics {
   private void writeFaces() {
     for(int i=0;i<faceCount;++i) {
       int[] f = faces[i];
-      String output = "f";
-      for(int j=0;j<f.length;++j) {
-        output += " " + f[j];
-      }
-      writer.println(output);
+	  if(colorFlag) {
+		String output = "f";
+		for(int j=0;j<f.length;++j) {
+		  output += " " + f[j] + "/" + f[j];
+		}
+		writer.println(output);
+	  } else {
+		writeFace(f);
+	  }
     }
   }
-
+  
+  private void writeFace(int [] f) {
+	String output = "f";
+      for(int j=0;j<f.length;++j) {
+		output += " " + f[j];
+      }
+      writer.println(output);
+  }
+  
+  private void colorExport() {
+    int textureSize = PApplet.ceil(PApplet.sqrt(ptMap.size()));
+	
+	texture = parent.createGraphics(textureSize, textureSize, P2D);
+	writer.println("mtllib " + filenameSimple + ".mtl");
+	writer.println("usemtl " + filenameSimple);
+	
+	writeTextureCoords();
+	generateTexture();
+	writeMaterial();
+  }
+  
+  private void writeTextureCoords() {
+	for(int i=0;i<ptMap.size();++i) {
+      writer.println("vt " + (i%texture.width)*1.0/(texture.width-1) + " " + (i/texture.width)*1.0/(texture.width-1) );
+    }
+  }
+  
+  private void writeMaterial() {
+	PrintWriter matWriter = null;
+	try {
+		String filepath = file.getParent();
+        matWriter = new PrintWriter(new FileWriter(new File(filepath + "\\" + filenameSimple + ".mtl")));
+      } 
+      catch (IOException e) {
+        throw new RuntimeException(e);
+    }
+	matWriter.println("newmtl " + filenameSimple);
+	matWriter.println("Ka 1.000 1.000 1.000");
+	matWriter.println("Kd 1.000 1.000 1.000");
+	matWriter.println("Ks 0.000 0.000 0.000");
+	matWriter.println("d 1.0");
+	//do texture
+	matWriter.println("map_Ka " + filenameSimple + ".png");
+	matWriter.println("map_Kd " + filenameSimple + ".png");
+	matWriter.flush();
+	matWriter.close();
+  }
+  
+  private void generateTexture() {
+    texture.beginDraw();
+	texture.background(0);
+	texture.loadPixels();
+	int c;
+	for(int i=0;i<ptMap.size();++i) {
+	  c = colors[i];
+	  texture.pixels[i] = c;
+	}
+	texture.updatePixels();
+	texture.endDraw();
+	texture.save(file.getParent()  + "\\" + filenameSimple + ".png");
+  }
+  
   public void beginShape(int kind) {
     shape = kind;
     vertexCount = 0;
@@ -146,8 +235,13 @@ public class OBJExport extends PGraphics {
   private static float tempVertex[] = new float[3];
 
   public void vertex(float x, float y,float z) {	
+    if(vertexCount >= vertices.length) {
+		float newVertices[][] = new float[vertices.length*2][VERTEX_FIELD_COUNT];
+		System.arraycopy(vertices,0,newVertices,0,vertices.length);
+		vertices = newVertices;
+    }
     float vertex[] = vertices[vertexCount];
-    vertex[X] = x;  // note: not mx, my, mz like PGraphics3
+    vertex[X] = x;
     vertex[Y] = y;
     vertex[Z] = z;
 	transformMatrix.mult(vertex, tempVertex);
@@ -159,10 +253,20 @@ public class OBJExport extends PGraphics {
 		float newPts[][] = new float[pts.length*2][];
 		System.arraycopy(pts,0,newPts,0,pts.length);
 		pts = newPts;
+		//do the colors
+		if(colorFlag) {
+			int newColors[] = new int[colors.length*2];
+			System.arraycopy(colors,0,newColors,0,colors.length);
+			colors = newColors;
+		}
       }
-      pts[ptMap.size()] = new float[] {x,y,z};
+	  //might need to separating position and color so faces can have different colors
+	  //the plan: make every call of fill add a new color, have a separate uv index for the faces
+      if(colorFlag) colors[ptMap.size()] = fillColor;
+	  pts[ptMap.size()] = new float[] {x,y,z};
       ptMap.put(x+"_"+y+"_"+z,new Integer(ptMap.size()+1));
     }
+	//wait this is silly, I'm storing all this info twice. Should just store vertex index.
     vertex[X] = x;  // note: not mx, my, mz like PGraphics3
     vertex[Y] = y;
     vertex[Z] = z;
@@ -323,6 +427,8 @@ public class OBJExport extends PGraphics {
     System.arraycopy(faces,0,newfaces,0,faces.length);
     faces = newfaces;
    }
+   if(f.length == 3) numTriangles++;
+   else if(f.length == 4) numQuads++;
    faces[faceCount++] = f;
   }
   
@@ -583,5 +689,11 @@ public class OBJExport extends PGraphics {
   
   public boolean is2D() {
 	return false;
+  }
+  
+  public void setColor(boolean c) {
+	colorFlag = c;
+	//else
+	// showWarning("Cannot change color mode after beginDraw()");
   }
 }
