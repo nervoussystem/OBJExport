@@ -42,12 +42,12 @@ public class OBJExport extends PGraphics {
   static protected final int MATRIX_STACK_DEPTH = 32;
   int DEFAULT_VERTICES = 4096;
   int VERTEX_FIELD_COUNT = 3;
-  float vertices[][];
+  int vertices[];
   
   int numTriangles = 0;
   int numQuads = 0;
-  static protected int TRIANGLE_RES = 10;
-  static protected int RECT_RES = TRIANGLE_RES+5;
+  static public int TRIANGLE_RES = 7;
+  static public int RECT_RES = TRIANGLE_RES+5;
   
   boolean drawBegan = false;
   //make transform function work
@@ -57,10 +57,11 @@ public class OBJExport extends PGraphics {
   
   //color
   private boolean colorFlag = false;
-  PGraphics texture;
+  PGraphics textureG;
+  PImage texture;
   
   public OBJExport() {
-    vertices = new float[DEFAULT_VERTICES][VERTEX_FIELD_COUNT];
+    vertices = new int[DEFAULT_VERTICES];
 	stackDepth = 0;
 	transformMatrix = new PMatrix3D();
   }
@@ -120,17 +121,21 @@ public class OBJExport extends PGraphics {
     vertexCount = 0;
     numTriangles = 0;
     numQuads = 0;
+	parent.println("begin " + parent.millis());
   }
 
   public void endDraw() {
     //write vertices and initialize ptMap
 	if(colorFlag) {
+	parent.println("colorstart " + parent.millis());
 		colorExport();
 	}
+	parent.println("verts lines faces " + parent.millis());
     writeVertices();
     writeLines();
     writeFaces();
 	drawBegan = false;
+	parent.println("end " + parent.millis());
   }
   
   private void writeVertices() {
@@ -183,12 +188,21 @@ public class OBJExport extends PGraphics {
 	int numRects = PApplet.ceil(numTriangles/2.0f) + numQuads;
     int textureSize = PApplet.ceil(PApplet.sqrt(numRects))*RECT_RES;
 	
-	texture = parent.createGraphics(textureSize, textureSize, P2D);
+	if(textureSize > 1024) {
+		showWarning("Generating texture... this might take a while");
+		textureSize = PApplet.ceil(textureSize/1024.0f)*1024;
+	}
+	//need to make a separate image in case the texture is too big for openGL
+	texture = parent.createImage(textureSize,textureSize,PApplet.RGB);
+	textureG = parent.createGraphics(PApplet.min(textureSize,1024), PApplet.min(textureSize,1024), P2D);
 	writer.println("mtllib " + filenameSimple + ".mtl");
 	writer.println("usemtl " + filenameSimple);
 	
 	//writeTextureCoords();
+	parent.println("beginTex " + parent.millis());
+
 	generateTexture();
+	parent.println("endTex " + parent.millis());
 	writeMaterial();
   }
     
@@ -214,95 +228,118 @@ public class OBJExport extends PGraphics {
   }
   
   private void generateTexture() {
-    texture.beginDraw();
-	texture.background(0);
-	texture.loadPixels();
+    textureG.beginDraw();
+	textureG.background(0);
 	int c;
 	int currX = 0, currY = 0;
 	int[] f;
 	int[] fc;
 	boolean upper = true;
-	texture.strokeWeight(3);
+	textureG.strokeWeight(3);
 	int cIndex = 0;
+	int gX = 0;
+	int gY = 0;
 	for(int i=0;i<faceCount;++i) {
 		f = faces[i];
 		fc = faceColors[i];
 		if(f.length > 4) showWarning("Faces with more than 4 sides cannot be exported with color");
 		else if(f.length == 3) {
 			//draw triangle
-			texture.strokeWeight(3);
+			textureG.strokeWeight(3);
 			if(upper) {
-				texture.beginShape();
+				textureG.beginShape();
 				c = fc[0];
-				texture.fill(c);
-				texture.stroke(c);
-				texture.vertex(currX+1+.5f,currY+1+.5f);
-				writer.println("vt " + (currX+1+.5)*1.0/texture.width + " " + (1.0-(currY+1+.5)*1.0/texture.height));
+				textureG.fill(c);
+				textureG.stroke(c);
+				textureG.vertex(currX+1+.5f,currY+1+.5f);
+				writer.println("vt " + (gX+currX+1+.5)*1.0/texture.width + " " + (1.0-(gY+currY+1+.5)*1.0/texture.height));
 				c = fc[1];
-				texture.fill(c);
-				texture.stroke(c);
-				texture.vertex(currX+1+TRIANGLE_RES+.5f,currY+1+.5f);
-				writer.println("vt " + (currX+1+TRIANGLE_RES+.5)*1.0/texture.width + " " + (1.0-(currY+1+.5)*1.0/texture.height));
+				textureG.fill(c);
+				textureG.stroke(c);
+				textureG.vertex(currX+1+TRIANGLE_RES+.5f,currY+1+.5f);
+				writer.println("vt " + (gX+currX+1+TRIANGLE_RES+.5)*1.0/texture.width + " " + (1.0-(gY+currY+1+.5)*1.0/texture.height));
 				c = fc[2];
-				texture.fill(c);
-				texture.stroke(c);
-				texture.vertex(currX+1+.5f,currY+TRIANGLE_RES+1+.5f);
-				writer.println("vt " + (currX+1+.5)*1.0/texture.width + " " + (1.0-(currY+TRIANGLE_RES+1+.5)*1.0/texture.height));				
-				texture.endShape(CLOSE);
+				textureG.fill(c);
+				textureG.stroke(c);
+				textureG.vertex(currX+1+.5f,currY+TRIANGLE_RES+1+.5f);
+				writer.println("vt " + (gX+currX+1+.5)*1.0/texture.width + " " + (1.0-(gY+currY+TRIANGLE_RES+1+.5)*1.0/texture.height));				
+				textureG.endShape(CLOSE);
 			} else {
-				texture.beginShape();
+				textureG.beginShape();
 				c = fc[0];
-				texture.fill(c);
-				texture.stroke(c);
-				texture.vertex(currX+3+TRIANGLE_RES+.5f,currY+3+.5f);
-				writer.println("vt " + (currX+3+TRIANGLE_RES+.5)*1.0/texture.width + " " + (1.0-(currY+3+.5)*1.0/texture.height));
+				textureG.fill(c);
+				textureG.stroke(c);
+				textureG.vertex(currX+3+TRIANGLE_RES+.5f,currY+3+.5f);
+				writer.println("vt " + (gX+currX+3+TRIANGLE_RES+.5)*1.0/texture.width + " " + (1.0-(gY+currY+3+.5)*1.0/texture.height));
 				c = fc[1];
-				texture.fill(c);
-				texture.stroke(c);
-				texture.vertex(currX+TRIANGLE_RES+3+.5f,currY+TRIANGLE_RES+3+.5f);
-				writer.println("vt " + (currX+TRIANGLE_RES+3+.5)*1.0/texture.width + " " + (1.0-(currY+TRIANGLE_RES+3+.5)*1.0/texture.height));
+				textureG.fill(c);
+				textureG.stroke(c);
+				textureG.vertex(currX+TRIANGLE_RES+3+.5f,currY+TRIANGLE_RES+3+.5f);
+				writer.println("vt " + (gX+currX+TRIANGLE_RES+3+.5)*1.0/texture.width + " " + (1.0-(gY+currY+TRIANGLE_RES+3+.5)*1.0/texture.height));
 				c = fc[2];
-				texture.fill(c);
-				texture.stroke(c);
-				texture.vertex(currX+3+.5f,currY+TRIANGLE_RES+3+.5f);
-				writer.println("vt " + (currX+3+.5)*1.0/texture.width + " " + (1.0-(currY+TRIANGLE_RES+3+.5)*1.0/texture.height));
-				texture.endShape(CLOSE);
+				textureG.fill(c);
+				textureG.stroke(c);
+				textureG.vertex(currX+3+.5f,currY+TRIANGLE_RES+3+.5f);
+				writer.println("vt " + (gX+currX+3+.5)*1.0/texture.width + " " + (1.0-(gY+currY+TRIANGLE_RES+3+.5)*1.0/texture.height));
+				textureG.endShape(CLOSE);
 				currX += RECT_RES;
 			}
 			upper = !upper;
 		} else if(f.length == 4) {
-			texture.strokeWeight(4);
-			texture.beginShape();
+			textureG.strokeWeight(4);
+			textureG.beginShape();
 			c = fc[0];
-			texture.fill(c);
-			texture.stroke(c);
-			texture.vertex(currX+1+.5f,currY+1+.5f);
-			writer.println("vt " + (currX+1+.5)*1.0/texture.width + " " + (1.0-(currY+1+.5)*1.0/texture.height));
+			textureG.fill(c);
+			textureG.stroke(c);
+			textureG.vertex(currX+1+.5f,currY+1+.5f);
+			writer.println("vt " + (gX+currX+1+.5)*1.0/texture.width + " " + (1.0-(gY+currY+1+.5)*1.0/texture.height));
 			c = fc[1];
-			texture.fill(c);
-			texture.stroke(c);
-			texture.vertex(currX+1+TRIANGLE_RES+.5f,currY+1+.5f);
-			writer.println("vt " + (currX+1+TRIANGLE_RES+.5)*1.0/texture.width + " " + (1.0-(currY+1+.5)*1.0/texture.height));
+			textureG.fill(c);
+			textureG.stroke(c);
+			textureG.vertex(currX+1+TRIANGLE_RES+.5f,currY+1+.5f);
+			writer.println("vt " + (gX+currX+1+TRIANGLE_RES+.5)*1.0/texture.width + " " + (1.0-(gY+currY+1+.5)*1.0/texture.height));
 			c = fc[2];
-			texture.fill(c);
-			texture.stroke(c);
-			texture.vertex(currX+TRIANGLE_RES+1+.5f,currY+TRIANGLE_RES+1+.5f);
-			writer.println("vt " + (currX+TRIANGLE_RES+1+.5)*1.0/texture.width + " " + (1.0-(currY+TRIANGLE_RES+1+.5)*1.0/texture.height));
+			textureG.fill(c);
+			textureG.stroke(c);
+			textureG.vertex(currX+TRIANGLE_RES+1+.5f,currY+TRIANGLE_RES+1+.5f);
+			writer.println("vt " + (gX+currX+TRIANGLE_RES+1+.5)*1.0/texture.width + " " + (1.0-(gY+currY+TRIANGLE_RES+1+.5)*1.0/texture.height));
 			c = fc[3];
-			texture.fill(c);
-			texture.stroke(c);
-			texture.vertex(currX+1+.5f,currY+TRIANGLE_RES+1+.5f);
-			writer.println("vt " + (currX+1+.5)*1.0/texture.width + " " + (1.0-(currY+TRIANGLE_RES+1+.5)*1.0/texture.height));				
-			texture.endShape(CLOSE);
+			textureG.fill(c);
+			textureG.stroke(c);
+			textureG.vertex(currX+1+.5f,currY+TRIANGLE_RES+1+.5f);
+			writer.println("vt " + (gX+currX+1+.5)*1.0/texture.width + " " + (1.0-(gY+currY+TRIANGLE_RES+1+.5)*1.0/texture.height));				
+			textureG.endShape(CLOSE);
 			currX += RECT_RES;
 			upper = true;
 		}
-		if(currX >= texture.width) {
+		if(currX+RECT_RES > textureG.width) {
 			currX = 0;
 			currY += RECT_RES;
+			
+			if(currY+RECT_RES > textureG.height) {
+				parent.println("switch texture " + gX + " " + gY);
+				//copy to texture
+				//textureG.endDraw();
+				int copyW = PApplet.min(texture.width-gX, textureG.width);
+				int copyH = PApplet.min(texture.height-gY, textureG.height);
+				texture.copy(textureG,0,0,copyW,copyH,gX,gY,copyW,copyH);
+				//textureG.beginDraw();
+				textureG.background(0);
+				currX = 0;
+				currY = 0;
+				gX += textureG.width;
+				if(gX >= texture.width) {
+					gY += textureG.height;
+					gX = 0;
+				}
+			}
 		}
 	}
-	texture.endDraw();
+	int copyW = PApplet.min(texture.width-gX, textureG.width);
+	int copyH = PApplet.min(texture.height-gY, textureG.height);
+	texture.copy(textureG,0,0,copyW,copyH,gX,gY,copyW,copyH);
+	
+	textureG.endDraw();
 	texture.save(file.getParent()  + "\\" + filenameSimple + ".png");
   }
   
@@ -316,14 +353,15 @@ public class OBJExport extends PGraphics {
   }
   
   private static float tempVertex[] = new float[3];
-
+  
+  float[] vertex = new float[3];
   public void vertex(float x, float y,float z) {	
     if(vertexCount >= vertices.length) {
-		float newVertices[][] = new float[vertices.length*2][VERTEX_FIELD_COUNT];
+		int newVertices[] = new int[vertices.length*2];
 		System.arraycopy(vertices,0,newVertices,0,vertices.length);
 		vertices = newVertices;
     }
-    float vertex[] = vertices[vertexCount];
+   // float vertex[] = vertices[vertexCount];
     vertex[X] = x;
     vertex[Y] = y;
     vertex[Z] = z;
@@ -342,7 +380,10 @@ public class OBJExport extends PGraphics {
 	  //the plan: make every call of fill add a new color, have a separate uv index for the faces
 	  pts[ptMap.size()] = new float[] {x,y,z};
       ptMap.put(x+"_"+y+"_"+z,new Integer(ptMap.size()+1));
-    }
+	  vertices[vertexCount] = ptMap.size();
+    } else {
+		vertices[vertexCount] = ptMap.get(x+"_"+y+"_"+z).intValue();
+	}
 	//color
 	if(colorFlag) {
 		if(vertexCount >= colors.length) {
@@ -353,10 +394,6 @@ public class OBJExport extends PGraphics {
 		colors[vertexCount] = fillColor;
 	}
 
-	//wait this is silly, I'm storing all this info twice. Should just store vertex index.
-    vertex[X] = x;  // note: not mx, my, mz like PGraphics3
-    vertex[Y] = y;
-    vertex[Z] = z;
     vertexCount++;
   }
 
@@ -374,9 +411,9 @@ public class OBJExport extends PGraphics {
         int stop = vertexCount-2;
           for (int i = 0; i < stop; i += 3) {
             int[] f = new int[3];
-            f[0] = (ptMap.get(vertices[i][X]+"_"+vertices[i][Y]+"_"+vertices[i][Z])).intValue();
-            f[1] = (ptMap.get(vertices[i+1][X]+"_"+vertices[i+1][Y]+"_"+vertices[i+1][Z])).intValue();
-            f[2] = (ptMap.get(vertices[i+2][X]+"_"+vertices[i+2][Y]+"_"+vertices[i+2][Z])).intValue();
+            f[0] = vertices[i];
+            f[1] = vertices[i+1];
+            f[2] = vertices[i+2];
             addFace(f);
 			if(colorFlag) {
 				int[] fc = new int[3];
@@ -396,9 +433,9 @@ public class OBJExport extends PGraphics {
             // otherwise the feller is backwards and renderer won't draw
             if ((i % 2) == 0) {
               int[] f = new int[3];
-              f[0] = (ptMap.get(vertices[i][X]+"_"+vertices[i][Y]+"_"+vertices[i][Z])).intValue();
-              f[1] = (ptMap.get(vertices[i+2][X]+"_"+vertices[i+2][Y]+"_"+vertices[i+2][Z])).intValue();
-              f[2] = (ptMap.get(vertices[i+1][X]+"_"+vertices[i+1][Y]+"_"+vertices[i+1][Z])).intValue();
+              f[0] = vertices[i];
+              f[1] = vertices[i+2];
+              f[2] = vertices[i+1];
               addFace(f);
 			  if(colorFlag) {
 				int[] fc = new int[3];
@@ -409,9 +446,9 @@ public class OBJExport extends PGraphics {
 			  }
             } else {
               int[] f = new int[3];
-              f[0] = (ptMap.get(vertices[i][X]+"_"+vertices[i][Y]+"_"+vertices[i][Z])).intValue();
-              f[1] = (ptMap.get(vertices[i+1][X]+"_"+vertices[i+1][Y]+"_"+vertices[i+1][Z])).intValue();
-              f[2] = (ptMap.get(vertices[i+2][X]+"_"+vertices[i+2][Y]+"_"+vertices[i+2][Z])).intValue();
+              f[0] = vertices[i];
+              f[1] = vertices[i+1];
+              f[2] = vertices[i+2];
               addFace(f);
 			  if(colorFlag) {
 				int[] fc = new int[3];
@@ -427,7 +464,7 @@ public class OBJExport extends PGraphics {
       case POLYGON:
       {
         int[] f;
-        boolean closed = vertices[0][X]!=vertices[vertexCount-1][X] || vertices[0][Y]!=vertices[vertexCount-1][Y] || vertices[0][Z]!=vertices[vertexCount-1][Z];
+        boolean closed = vertices[0]!=vertices[vertexCount-1];
         if(closed) {
          f = new int[vertexCount];
         } else {
@@ -436,7 +473,7 @@ public class OBJExport extends PGraphics {
         int end = vertexCount;
         if(!closed) end--;
         for(int i=0;i<end;++i) {
-          f[i] = (ptMap.get(vertices[i][X]+"_"+vertices[i][Y]+"_"+vertices[i][Z])).intValue();
+          f[i] = vertices[i];
         }
         addFace(f);
 		if(colorFlag) {
@@ -458,10 +495,10 @@ public class OBJExport extends PGraphics {
         int stop = vertexCount-3;
         for (int i = 0; i < stop; i += 4) {
             int[] f = new int[4];
-            f[0] = (ptMap.get(vertices[i][X]+"_"+vertices[i][Y]+"_"+vertices[i][Z])).intValue();
-            f[1] = (ptMap.get(vertices[i+1][X]+"_"+vertices[i+1][Y]+"_"+vertices[i+1][Z])).intValue();
-            f[2] = (ptMap.get(vertices[i+2][X]+"_"+vertices[i+2][Y]+"_"+vertices[i+2][Z])).intValue();
-            f[3] = (ptMap.get(vertices[i+3][X]+"_"+vertices[i+3][Y]+"_"+vertices[i+3][Z])).intValue();
+            f[0] = vertices[i];
+            f[1] = vertices[i+1];
+            f[2] = vertices[i+2];
+            f[3] = vertices[i+3];
             addFace(f);
 			if(colorFlag) {
 				int[] fc = new int[4];
@@ -480,10 +517,10 @@ public class OBJExport extends PGraphics {
         int stop = vertexCount-3;
         for (int i = 0; i < stop; i += 2) {
             int[] f = new int[4];
-            f[0] = (ptMap.get(vertices[i][X]+"_"+vertices[i][Y]+"_"+vertices[i][Z])).intValue();
-            f[1] = (ptMap.get(vertices[i+1][X]+"_"+vertices[i+1][Y]+"_"+vertices[i+1][Z])).intValue();
-            f[3] = (ptMap.get(vertices[i+2][X]+"_"+vertices[i+2][Y]+"_"+vertices[i+2][Z])).intValue();
-            f[2] = (ptMap.get(vertices[i+3][X]+"_"+vertices[i+3][Y]+"_"+vertices[i+3][Z])).intValue();
+            f[0] = vertices[i];
+            f[1] = vertices[i+1];
+            f[3] = vertices[i+2];
+            f[2] = vertices[i+3];
             addFace(f);        
 			if(colorFlag) {
 				int[] fc = new int[4];
@@ -501,9 +538,9 @@ public class OBJExport extends PGraphics {
         int stop = vertexCount - 1;
         for (int i = 1; i < stop; i++) {
 			int f[] = new int[3];
-			f[0] = (ptMap.get(vertices[0][X]+"_"+vertices[0][Y]+"_"+vertices[0][Z])).intValue();
-			f[1] = (ptMap.get(vertices[i][X]+"_"+vertices[i][Y]+"_"+vertices[i][Z])).intValue();
-			f[2] = (ptMap.get(vertices[i+1][X]+"_"+vertices[i+1][Y]+"_"+vertices[i+1][Z])).intValue();
+			f[0] = vertices[0];
+			f[1] = vertices[i];
+			f[2] = vertices[i+1];
 			addFace(f);
 			if(colorFlag) {
 				int[] fc = new int[3];
@@ -520,49 +557,6 @@ public class OBJExport extends PGraphics {
   
   //unused as of this version
   public void endShapeStroke(int mode) {
-      switch(shape) {
-      case LINES:
-        {
-        int stop = vertexCount-1;
-        for (int i = 0; i < stop; i += 2) {
-              int[] l = new int[2];
-              l[0] = (ptMap.get(vertices[i][X]+"_"+vertices[i][Y]+"_"+vertices[i][Z])).intValue();
-              l[1] = (ptMap.get(vertices[i+1][X]+"_"+vertices[i+1][Y]+"_"+vertices[i+1][Z])).intValue();
-              addLine(l);;
-          }
-        }
-        break;
-      case TRIANGLES:
-        {
-        int stop = vertexCount-2;
-          for (int i = 0; i < stop; i += 3) {
-            int[] l = new int[4];
-            l[0] = (ptMap.get(vertices[i][X]+"_"+vertices[i][Y]+"_"+vertices[i][Z])).intValue();
-            l[1] = (ptMap.get(vertices[i+1][X]+"_"+vertices[i+1][Y]+"_"+vertices[i+1][Z])).intValue();
-            l[2] = (ptMap.get(vertices[i+2][X]+"_"+vertices[i+2][Y]+"_"+vertices[i+2][Z])).intValue();
-            l[3] = l[0];
-            addLine(l);;
-          }
-        }
-      
-      break;
-      case POLYGON:
-      {
-        int[] l;
-        boolean closed = mode == CLOSE && (vertices[0][X]!=vertices[vertexCount-1][X] || vertices[0][Y]!=vertices[vertexCount-1][Y] || vertices[0][Z]!=vertices[vertexCount-1][Z]);
-        if(closed) {
-         l = new int[vertexCount+1];
-        } else {
-         l = new int[vertexCount];
-        }
-        for(int i=0;i<vertexCount;++i) {
-          l[i] = (ptMap.get(vertices[i][X]+"_"+vertices[i][Y]+"_"+vertices[i][Z])).intValue();
-        }
-        if(closed) l[vertexCount] = l[0];
-        addLine(l);
-      }
-      break;
-    }
   }
   
   private void addFace(int[] f) {
