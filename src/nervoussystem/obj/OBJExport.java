@@ -121,21 +121,17 @@ public class OBJExport extends PGraphics {
     vertexCount = 0;
     numTriangles = 0;
     numQuads = 0;
-	parent.println("begin " + parent.millis());
   }
 
   public void endDraw() {
     //write vertices and initialize ptMap
 	if(colorFlag) {
-	parent.println("colorstart " + parent.millis());
 		colorExport();
 	}
-	parent.println("verts lines faces " + parent.millis());
     writeVertices();
     writeLines();
     writeFaces();
 	drawBegan = false;
-	parent.println("end " + parent.millis());
   }
   
   private void writeVertices() {
@@ -199,10 +195,7 @@ public class OBJExport extends PGraphics {
 	writer.println("usemtl " + filenameSimple);
 	
 	//writeTextureCoords();
-	parent.println("beginTex " + parent.millis());
-
 	generateTexture();
-	parent.println("endTex " + parent.millis());
 	writeMaterial();
   }
     
@@ -317,7 +310,6 @@ public class OBJExport extends PGraphics {
 			currY += RECT_RES;
 			
 			if(currY+RECT_RES > textureG.height) {
-				parent.println("switch texture " + gX + " " + gY);
 				//copy to texture
 				//textureG.endDraw();
 				int copyW = PApplet.min(texture.width-gX, textureG.width);
@@ -842,5 +834,10 @@ public class OBJExport extends PGraphics {
 	colorFlag = c;
 	//else
 	// showWarning("Cannot change color mode after beginDraw()");
+  }
+  
+  public void setTriangleRes(int res) {
+	TRIANGLE_RES = res;
+	RECT_RES = res+5;
   }
 }

@@ -30,8 +30,8 @@ void draw() {
 
 void drawNoise(PGraphics pg) {
   pg.beginShape(TRIANGLES);
-  for(int i=0;i<300;i++) {
-    for(int j=0;j<300;j++) {
+  for(int i=0;i<50;i++) {
+    for(int j=0;j<50;j++) {
       float z = noise(i*noiseScale,j*noiseScale);
       pg.fill( lerpColor( color(255,0,0),color(0,0,255),z ));
       pg.vertex(i,j,z*50);
