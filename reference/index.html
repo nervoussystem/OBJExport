@@ -26,42 +26,58 @@
 
       		
 <style type="text/css">
-  div.lib { color: black; background: white;font-size:10pt;width:400px; padding-bottom:10px;float:left;}
-  span.title {font-size:10pt;font-weight:bold;}
+ body, div, p {font-family:verdana,sans-serif;}
+  div.lib { color: black; background: white;font-size:12px;width:400px; padding-bottom:10px;float:left;font-family:verdana,sans-serif;}
+  span.title {font-size:14px;font-weight:bold;font-family:verdana,sans-serif;}
   a.d {text-decoration:underline;}
   a.d:hover {text-decoration:none;}
   .main {font-size:14pt;}
+  span.function {color:#0000FF;}
 
   pre {font-family:monospace;}
   div {padding-bottom:10px;}
 </style>
 
 <div class="bod">
-	<div style="float:left;width:400px;background:white;padding:5px;">
-			<div class="lib"><span class="main">OBJExport</span> <br>latest v0.1.2 03/07/2013</div>
+<div class="lib" style="width:100%">
+				<span class="main">OBJExport</span>
+				<br>latest v0.2.2 03/14/2013
+			</div>
+	<div style="float:left;width:400px;background:white;padding-right:20px;">
+			
 			<div class="lib">
 				
-				<div><span class="title">Website</span><br>
+				<div><span class="title">GitHub</span><br>
 				<a href="https://github.com/nervoussystem/OBJExport">https://github.com/nervoussystem/OBJExport</a>
 				</div>
 				
-				<div><span class="title">Description</span><br>This is a simple library to export surfaces from processing as OBJ files.  It is used the same way the PDF library is used.
+				<div><span class="title">Description</span><br>This is a library to export meshes from Processing as OBJ files.  
+				It can export color meshes with triangle and quad shaped faces as an OBJ with a PNG texture map.  
+				And it can export meshes with arbitrary shape faces as a basic OBJ.  The OBJExport library is used the same way the PDF library is used.
 				
 				<p>
-				It works with <strong>beginRecord()</strong>, <strong>beginRaw()</strong>, and <strong>createGraphics()</strong>. The OBJ format and the exporter work with arbitrarily sided polygon, not just triangles. This allows for the versatility to export quad or hex based meshes not just triangles. If you require triangle but are drawing with polygons instead, you can use <strong>beginRaw()</strong> to get the tesselated output of Processing rather than the original polygons. This library only supports basic mesh output, and it does not currently support advanced features such as colors, normals, textures, or materials. If that's something you're interested in, let me know or contribute!
+				OBJExport works with <span class="function">beginRecord()</span>, <span class="function">beginRaw()</span>, and <span class="function">createGraphics()</span>. The OBJ format and the exporter work with arbitrarily sided polygon, not just triangles. This allows for the versatility to export quad or hex based meshes not just triangles. If you require triangles but are drawing with polygons instead, you can use <span class="function">beginRaw()</span> to get the tesselated output of Processing rather than the original polygons.
+				</p>
+				<p>
+				The library also supports color mesh export creating a .png texture and a .mtl material file to go along with the obj. Color mode is not enabled by default.  Use <span class="function">setColor(true)</span> on the OBJExport object before <span class="function">beginDraw()</span> to turn on color export.
+				</p>
+				<p>
+				The library does not support stroke(), texture() or normal() in the export. If you're interested in that functionality, let me know or contribute!
 				</p>
 				<p>
 				Tested on Windows 7, Processing 2.0b8
 				</p>
 				</div>
 			</div>
+			<div class="lib"><span class="title">Warning</span><br>
+				This library is brand spanking new and probably has bugs! 
+			</div>
 			<div class="lib"><span class="title">Installation</span><br>
 				To install simply download the zip file, and extract the contents to your Processing libraries folder.
 			</div>
-<div class="lib"><span class="title">Example</span>
-		<pre>	
-import nervoussystem.obj.*;
-boolean record;
+<div class="lib"><span class="title">Basic Example</span>
+		<pre>import nervoussystem.obj.*;
+boolean record = false;
 
 void setup() {
   size(400, 400,P3D);
@@ -82,16 +98,97 @@ void mousePressed() {
   record = true;
 }
 </pre>
-	</div>
+<br>
+<span class="title">Color Example</span>
+<pre>
+import nervoussystem.obj.*;
+
+boolean record = false;
+float noiseScale = .05;
+void setup() {
+  size(400,400,P3D);
+}
+
+void draw() {
+  background(255);
+  
+  if(record) {
+    OBJExport obj = (OBJExport) createGraphics(10,10,"nervoussystem.obj.OBJExport","colored.obj");
+    obj.setColor(true);
+    obj.beginDraw();
+    drawNoise(obj);
+    obj.endDraw();
+    obj.dispose();
+    record = false;
+  }
+  noStroke();
+  translate(width/2,height/2,-50);
+  rotateX(PI/6.0);
+  rotateZ(frameCount*PI/360.0);
+  translate(-100,-100,0);
+  scale(4);
+  drawNoise(this.g);
+}
+
+void drawNoise(PGraphics pg) {
+  pg.beginShape(TRIANGLES);
+  for(int i=0;i<50;i++) {
+    for(int j=0;j<50;j++) {
+      float z = noise(i*noiseScale,j*noiseScale);
+      pg.fill( lerpColor( color(255,0,0),color(0,0,255),z ));
+      pg.vertex(i,j,z*50);
+      z = noise((i+1)*noiseScale,j*noiseScale);
+      pg.fill( lerpColor( color(255,0,0),color(0,0,255),z ));
+      pg.vertex(i+1,j,z*50);
+      z = noise((i+1)*noiseScale,(j+1)*noiseScale);
+      pg.fill( lerpColor( color(255,0,0),color(0,0,255),z ));
+      pg.vertex(i+1,j+1,z*50);
+
+      z = noise((i+1)*noiseScale,(j+1)*noiseScale);
+      pg.fill( lerpColor( color(255,0,0),color(0,0,255),z ));
+      pg.vertex(i+1,j+1,z*50);
+      z = noise(i*noiseScale,(j+1)*noiseScale);
+      pg.fill( lerpColor( color(255,0,0),color(0,0,255),z ));
+      pg.vertex(i,j+1,z*50);
+      z = noise(i*noiseScale,j*noiseScale);
+      pg.fill( lerpColor( color(255,0,0),color(0,0,255),z ));
+      pg.vertex(i,j,z*50);
+    }
+  }
+  pg.endShape();  
+}
+void keyPressed()
+{
+  if (key == 'r') {
+    record = true;
+  }
+}
+</pre>
+</div>
 	
+<div class="lib">
+<span class="title">Author</span>
 <div>
-<span class="title">Contact</span>
-<div>
+Jesse Louis-Rosenberg, Nervous System<br>
 jesse@n-e-r-v-o-u-s.com
 </div>
+</div>
+<div>
+<span class="title">Contributors</span>
+<div class="lib">
+<a href="http://formwerks.de">Michael Zoellner</a>
+</div>
+
 </div>	
 	</div>
-		
+	<div width="400px" style="float:left;">
+			
+<div class="lib"><span class="title">Download</span><p>
+				<a class="d" href="OBJExport.zip">download OBJExport 0.2.2 in .zip format here</a>
+				<p>
+				<img style="width:500px" src = "OBJExport.jpg">
+			</div>
+	</div>	
 	</div><!--end bod-->	
 </div><!-- end content -->
 </body>
