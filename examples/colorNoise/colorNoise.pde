@@ -10,12 +10,13 @@ void draw() {
   background(255);
   
   if(record) {
-    OBJExport obj = (OBJExport) createGraphics(10,10,"nervoussystem.obj.OBJExport","colored.obj");
-    obj.setColor(true);
-    obj.beginDraw();
-    drawNoise(obj);
-    obj.endDraw();
-    obj.dispose();
+    //export an x3d file, change to OBJExport for obj
+    X3DExport x3D = (X3DExport) createGraphics(10,10,"nervoussystem.obj.X3DExport","colored.x3d");
+    x3D.setColor(true);
+    x3D.beginDraw();
+    drawNoise(x3D);
+    x3D.endDraw();
+    x3D.dispose();
     record = false;
   }
   noStroke();

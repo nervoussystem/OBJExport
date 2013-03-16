@@ -41,7 +41,7 @@
 <div class="bod">
 <div class="lib" style="width:100%">
 				<span class="main">OBJExport</span>
-				<br>latest v0.2.2 03/14/2013
+				<br>latest v0.2.3 03/16/2013
 			</div>
 	<div style="float:left;width:400px;background:white;padding-right:20px;">
 			
@@ -51,9 +51,9 @@
 				<a href="https://github.com/nervoussystem/OBJExport">https://github.com/nervoussystem/OBJExport</a>
 				</div>
 				
-				<div><span class="title">Description</span><br>This is a library to export meshes from Processing as OBJ files.  
-				It can export color meshes with triangle and quad shaped faces as an OBJ with a PNG texture map.  
-				And it can export meshes with arbitrary shape faces as a basic OBJ.  The OBJExport library is used the same way the PDF library is used.
+				<div><span class="title">Description</span><br>This is a library to export meshes from Processing as OBJ or X3D files.  
+				It can export color meshes with triangle and quad shaped faces as an OBJ or X3D with a PNG texture map.  
+				It can also export meshes with faces with an arbitrary number of sides (without color support).  The OBJExport library is used the same way the PDF library is used.
 				
 				<p>
 				OBJExport works with <span class="function">beginRecord()</span>, <span class="function">beginRaw()</span>, and <span class="function">createGraphics()</span>. The OBJ format and the exporter work with arbitrarily sided polygon, not just triangles. This allows for the versatility to export quad or hex based meshes not just triangles. If you require triangles but are drawing with polygons instead, you can use <span class="function">beginRaw()</span> to get the tesselated output of Processing rather than the original polygons.
@@ -73,7 +73,7 @@
 				This library is brand spanking new and probably has bugs! 
 			</div>
 			<div class="lib"><span class="title">Installation</span><br>
-				To install simply download the zip file, and extract the contents to your Processing libraries folder.
+				To install simply download the zip file, and extract the contents to your Processing libraries folder. Or you can use Add Library in the Processing IDE.
 			</div>
 <div class="lib"><span class="title">Basic Example</span>
 		<pre>import nervoussystem.obj.*;
@@ -113,6 +113,7 @@ void draw() {
   background(255);
   
   if(record) {
+    //X3DExport x3d = (X3DExport) createGraphics(10,10,"nervoussystem.obj.X3DExport","colored.x3d");
     OBJExport obj = (OBJExport) createGraphics(10,10,"nervoussystem.obj.OBJExport","colored.obj");
     obj.setColor(true);
     obj.beginDraw();
@@ -184,7 +185,7 @@ jesse@n-e-r-v-o-u-s.com
 	<div width="400px" style="float:left;">
 			
 <div class="lib"><span class="title">Download</span><p>
-				<a class="d" href="OBJExport.zip">download OBJExport 0.2.2 in .zip format here</a>
+				<a class="d" href="OBJExport.zip">download OBJExport 0.2.3 in .zip format here</a>
 				<p>
 				<img style="width:500px" src = "OBJExport.jpg">
 			</div>
