@@ -46,6 +46,7 @@ public class MeshExport extends PGraphics {
   
   int numTriangles = 0;
   int numQuads = 0;
+  int ptCount = 0;
   static public int TRIANGLE_RES = 7;
   static public int RECT_RES = TRIANGLE_RES+5;
   
@@ -57,8 +58,8 @@ public class MeshExport extends PGraphics {
   
   //color
   boolean colorFlag = false;
-  PGraphics textureG;
-  PImage texture;
+  private static PGraphics textureG = null;
+  private static PImage texture = null;
   
   public MeshExport() {
     vertices = new int[DEFAULT_VERTICES];
@@ -90,6 +91,9 @@ public class MeshExport extends PGraphics {
     writer.flush();
     writer.close();
     writer = null;
+	ptMap.clear();
+	if(texture != null) {
+	}
   }
 
   public boolean displayable() {
@@ -119,6 +123,7 @@ public class MeshExport extends PGraphics {
     lineCount = 0;
     faceCount = 0;
     vertexCount = 0;
+	ptCount = 0;
     numTriangles = 0;
     numQuads = 0;
   }
@@ -144,10 +149,14 @@ public class MeshExport extends PGraphics {
 		showWarning("Generating texture... this might take a while");
 		textureSize = PApplet.ceil(textureSize/1024.0f)*1024;
 	}
+	if(texture == null) {
+		texture = parent.createImage(10,10,PApplet.RGB);
+		//textureG = parent.createGraphics(PApplet.min(textureSize,1024), PApplet.min(textureSize,1024), P2D);
+		textureG = parent.createGraphics(1024,1024, P2D);
+	}
 	//need to make a separate image in case the texture is too big for openGL
-	texture = parent.createImage(textureSize,textureSize,PApplet.RGB);
-	textureG = parent.createGraphics(PApplet.min(textureSize,1024), PApplet.min(textureSize,1024), P2D);
-	
+	texture.resize(textureSize,textureSize);
+	//textureG.setSize(PApplet.min(textureSize,1024), PApplet.min(textureSize,1024));
 	//writeTextureCoords();
 	generateTexture();
   }
@@ -264,6 +273,7 @@ public class MeshExport extends PGraphics {
 	texture.copy(textureG,0,0,copyW,copyH,gX,gY,copyW,copyH);
 	
 	textureG.endDraw();
+	
 	texture.save(file.getParent()  + "\\" + filenameSimple + ".png");
   }
   
@@ -295,16 +305,17 @@ public class MeshExport extends PGraphics {
 	z = tempVertex[2];
 	//does not account for floating point error or tolerance
     if(!ptMap.containsKey(x+"_"+y+"_"+z)) {
-      if(ptMap.size() >= pts.length) {
+      if(ptCount >= pts.length) {
 		float newPts[][] = new float[pts.length*2][];
 		System.arraycopy(pts,0,newPts,0,pts.length);
 		pts = newPts;
       }
 	  //might need to separating position and color so faces can have different colors
 	  //the plan: make every call of fill add a new color, have a separate uv index for the faces
-	  pts[ptMap.size()] = new float[] {x,y,z};
-      ptMap.put(x+"_"+y+"_"+z,new Integer(ptMap.size()+1));
-	  vertices[vertexCount] = ptMap.size();
+	  pts[ptCount] = new float[] {x,y,z};
+	  ptCount++;
+	  ptMap.put(x+"_"+y+"_"+z,new Integer(ptMap.size()+1));
+	  vertices[vertexCount] = ptCount;
     } else {
 		vertices[vertexCount] = ptMap.get(x+"_"+y+"_"+z).intValue();
 	}

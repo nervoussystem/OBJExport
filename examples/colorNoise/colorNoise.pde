@@ -11,7 +11,7 @@ void draw() {
   
   if(record) {
     //export an x3d file, change to OBJExport for obj
-    X3DExport x3D = (X3DExport) createGraphics(10,10,"nervoussystem.obj.X3DExport","colored.x3d");
+    MeshExport x3D = (MeshExport) createGraphics(10,10,"nervoussystem.obj.X3DExport","colored.x3d");
     x3D.setColor(true);
     x3D.beginDraw();
     drawNoise(x3D);

@@ -1,5 +1,5 @@
 OBJExport 
-latest v0.2.5 03/16/2013
+latest v0.2.6 04/21/2013
 
 # Description
 

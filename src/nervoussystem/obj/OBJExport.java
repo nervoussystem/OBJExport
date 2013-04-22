@@ -28,7 +28,7 @@ public class OBJExport extends MeshExport {
 	@Override
 	protected void writeVertices() {
 		float v[];
-		for(int i=0;i<ptMap.size();++i) {
+		for(int i=0;i<ptCount;++i) {
 			v = pts[i];
 			writer.println("v " + v[0] + " " + v[1] + " " + v[2]);
 		}
