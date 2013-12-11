@@ -77,7 +77,7 @@ public class OBJExport extends MeshExport {
 		PrintWriter matWriter = null;
 		try {
 			String filepath = file.getParent();
-			matWriter = new PrintWriter(new FileWriter(new File(filepath + "\\" + filenameSimple + ".mtl")));
+			matWriter = new PrintWriter(new FileWriter(new File(filepath + File.separator + filenameSimple + ".mtl")));
 		  } 
 		  catch (IOException e) {
 			throw new RuntimeException(e);

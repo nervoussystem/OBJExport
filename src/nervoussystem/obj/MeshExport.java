@@ -274,7 +274,7 @@ public class MeshExport extends PGraphics {
 	
 	textureG.endDraw();
 	
-	texture.save(file.getParent()  + "\\" + filenameSimple + ".png");
+	texture.save(file.getParent() + File.separator + filenameSimple + ".png");
   }
   
   public void beginShape(int kind) {
